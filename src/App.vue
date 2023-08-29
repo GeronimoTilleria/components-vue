@@ -1,20 +1,29 @@
 <script setup>
 
-import { computed } from "@vue/reactivity";
-import { ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 
 import BlogPost from "./components/BlogPost.vue";
 import PaginatePosts from "./components/PaginatePosts.vue";
+import LoadingSpinner from "./components/LoadingSpinner.vue";
 
 const miFavorito = ref("");
 const posts = ref([]);
 const postXpage = 10;
 const inicio = ref(0);
 const fin = ref(postXpage);
+const loading = ref(false);
 
-fetch("https://jsonplaceholder.typicode.com/posts")
-    .then((res) => res.json())
-    .then((data) => (posts.value = data));
+onMounted(async () => {
+    loading.value = true;
+    try {
+        const res = await fetch("https://jsonplaceholder.typicode.com/posts");
+        posts.value = await res.json();
+    } catch (error) {
+        console.log(error);
+    } finally {
+        setTimeout(() => (loading.value = false), 1500);
+    }
+});
 
 const fijarFavorito = (title) => {
     miFavorito.value = title;
@@ -31,9 +40,12 @@ const prev = () => {
 };
 
 const maxLength = computed(() => posts.value.length);
+
+const paginatePage = computed(() => posts.value.slice(inicio.value, fin.value));
 </script>
 
 <template>
+    <LoadingSpinner v-if="loading" />
     <div class="container">
         <h1>{{ miFavorito || "Sin favorito" }}</h1>
 
